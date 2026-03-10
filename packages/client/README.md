@@ -1,73 +1,70 @@
-# React + TypeScript + Vite
+# Idea Generator Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend application for the Idea Generator monorepo.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React `19`
+- TypeScript
+- Vite
+- Tailwind CSS `4`
+- `shadcn` UI config with the `radix-nova` style
 
-## React Compiler
+## Development server
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The Vite dev server runs on:
 
-## Expanding the ESLint configuration
+- `http://localhost:3000`
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+API requests to `/api` are proxied to the FastAPI backend at `http://localhost:8000`.
 
-```js
-export default defineConfig([
-   globalIgnores(['dist']),
-   {
-      files: ['**/*.{ts,tsx}'],
-      extends: [
-         // Other configs...
+## Scripts
 
-         // Remove tseslint.configs.recommended and replace with this
-         tseslint.configs.recommendedTypeChecked,
-         // Alternatively, use this for stricter rules
-         tseslint.configs.strictTypeChecked,
-         // Optionally, add this for stylistic rules
-         tseslint.configs.stylisticTypeChecked,
+From `packages/client`:
 
-         // Other configs...
-      ],
-      languageOptions: {
-         parserOptions: {
-            project: ['./tsconfig.node.json', './tsconfig.app.json'],
-            tsconfigRootDir: import.meta.dirname,
-         },
-         // other options...
-      },
-   },
-]);
+```bash
+bun run dev
+bun run build
+bun run lint
+bun run preview
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Project structure
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x';
-import reactDom from 'eslint-plugin-react-dom';
-
-export default defineConfig([
-   globalIgnores(['dist']),
-   {
-      files: ['**/*.{ts,tsx}'],
-      extends: [
-         // Other configs...
-         // Enable lint rules for React
-         reactX.configs['recommended-typescript'],
-         // Enable lint rules for React DOM
-         reactDom.configs.recommended,
-      ],
-      languageOptions: {
-         parserOptions: {
-            project: ['./tsconfig.node.json', './tsconfig.app.json'],
-            tsconfigRootDir: import.meta.dirname,
-         },
-         // other options...
-      },
-   },
-]);
+```text
+packages/client/
+├── src/
+│   ├── components/ui/   # reusable design-system primitives
+│   ├── lib/             # shared utilities
+│   ├── App.tsx          # app entry component
+│   └── main.tsx         # React bootstrap
+├── public/
+├── vite.config.ts
+└── components.json      # shadcn/ui configuration
 ```
+
+## Design-system guidance
+
+The app already includes reusable UI primitives in `src/components/ui/`.
+When adding new screens or features, prefer those components over raw repeated markup so the UI stays consistent and easier to evolve.
+
+## Path aliases
+
+The Vite config exposes the `@` alias for `src`:
+
+- `@/components`
+- `@/lib`
+- `@/components/ui`
+
+## Build output
+
+Production assets are generated into `dist/` when running:
+
+```bash
+bun run build
+```
+
+## Related docs
+
+- monorepo overview: `../../README.md`
+- backend API docs: `../server/README.md`

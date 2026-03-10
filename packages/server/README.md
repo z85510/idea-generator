@@ -1,71 +1,96 @@
 # Idea Generator API
 
-FastAPI service that:
+FastAPI service for generating and storing idea suggestions.
 
-- accepts structured metadata from the frontend
-- generates **exactly 5 project ideas**
-- stores request input, output, model, and token usage in SQLite
-- protects endpoints with an API key header
+## What it does
+
+- accepts structured input from the frontend
+- validates request and response payloads with Pydantic
+- generates exactly 5 project ideas through OpenRouter
+- caches duplicate requests by input
+- stores requests, outputs, model info, and token usage in SQLite
+- protects API routes with the `X-API-Key` header
+
+## Tech stack
+
+- FastAPI
+- Pydantic v2
+- aiosqlite
+- httpx
+- SQLite
+
+## Local setup
+
+From `packages/server`:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+Update `.env` with real values before starting the server.
 
 ## Environment variables
 
-- `OPENROUTER_API_KEY`: secret used by the backend to call OpenRouter
-- `API_SECRET_KEY`: shared secret the frontend sends in `X-API-Key`
+- `OPENROUTER_API_KEY`: backend secret used to call OpenRouter
+- `API_SECRET_KEY`: shared secret expected in `X-API-Key`
 - `OPENROUTER_MODEL` _(optional)_: defaults to `openai/gpt-4o-mini`
 - `IDEAS_DB_PATH` _(optional)_: defaults to `ideas.db`
-- `ALLOWED_ORIGINS` _(optional)_: comma-separated browser origins that can call the API (e.g. `https://siif.ai,https://app.siift.ai,https://beta.siift.ai`). Requests with an `Origin` header not in this list get 403. If unset or empty, no origin restriction is applied.
-
-## Deploy to Railway
-
-You **don’t need to create a separate database**. The app uses a single **SQLite file** (e.g. `ideas.db`). No PostgreSQL or MySQL setup.
-
-**Important:** On Railway the container filesystem is **ephemeral**—on redeploy the file is reset and data is lost. To keep data:
-
-1. In your Railway project, add a **Volume** and set the **mount path to a directory**, e.g. `/data` (not `/ideas.db`—the mount path must be a directory; the DB file goes inside it).
-2. In **Variables**, set `IDEAS_DB_PATH=/data/ideas.db` so the SQLite file lives inside that volume.
-
-If you’re fine losing ideas on each deploy (e.g. dev only), you can skip the volume and leave `IDEAS_DB_PATH` unset (defaults to `ideas.db` in the container).
-
-**Steps:**
-
-1. [Railway](https://railway.app) → **New Project** → **Deploy from GitHub** → select this repo and branch (e.g. `dev`).
-2. **Variables**: set `OPENROUTER_API_KEY`, `API_SECRET_KEY`. Optionally `OPENROUTER_MODEL`. If you added a volume, set `IDEAS_DB_PATH=/data/ideas.db`.
-3. **Volume** (recommended): create a volume, mount path `/data`.
-4. **Start command** (in Railway → Settings): `uvicorn main:app --host 0.0.0.0 --port $PORT`
-5. Deploy; use the generated URL for your API.
+- `IDEAS_CACHE_TTL_DAYS` _(optional)_: limits cache hits to recent entries only
+- `OUTPUT_NUMBER` _(optional)_: number of ideas requested from the provider, while the API still normalizes output to 5 items
+- `ALLOWED_ORIGINS` _(optional)_: comma-separated browser origins allowed to call the API
 
 ## Run locally
 
-```bash
-cp .env.example .env
+From `packages/server`:
 
-# then update .env with your real values
-export OPENROUTER_API_KEY="your-openrouter-key"
-export API_SECRET_KEY="your-frontend-secret"
-./.venv/bin/python -m uvicorn main:app --reload
+```bash
+source .venv/bin/activate
+uvicorn main:app --reload --port 8000
 ```
 
-## Swagger UI
+The monorepo root also provides a combined dev command:
 
-- Swagger: `http://127.0.0.1:8000/docs`
+```bash
+cd ../..
+bun run dev
+```
+
+## API docs
+
+- Swagger UI: `http://127.0.0.1:8000/docs`
 - OpenAPI JSON: `http://127.0.0.1:8000/openapi.json`
 
 In Swagger, click **Authorize** and enter your `API_SECRET_KEY` value for `X-API-Key`.
 
-## Generate ideas
+## Routes
 
-`POST /`
+### Welcome
+
+- `GET /api/`
+
+Returns a basic welcome message used by the frontend health check.
+
+### Generate ideas
+
+- canonical route: `POST /api/`
+- compatibility aliases: `POST /` and `POST /api/generate_idea`
+
+Example request:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/ \
+curl -X POST http://127.0.0.1:8000/api/ \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-frontend-secret" \
   -d '{
     "user_id": "user-1",
+    "prompt_template": "You generate practical and creative project ideas.",
     "metadata": {
       "What do you love": ["tech", "art"],
-      "What does the world need": ["test"],
-      "What are you good at": ["test"],
+      "What does the world need": ["education"],
+      "What are you good at": ["design", "coding"],
       "Extra information": ["I am a software engineer", "I am a designer"]
     }
   }'
@@ -74,49 +99,72 @@ curl -X POST http://127.0.0.1:8000/ \
 Example response fields:
 
 - `request_id`
-- `ideas` (5 items)
+- `user_id`
+- `prompt_template`
+- `metadata`
+- `ideas`
 - `usage.prompt_tokens`
 - `usage.completion_tokens`
 - `usage.total_tokens`
 - `model`
 - `created_at`
 
-## Read saved requests
+### Read saved requests
 
-`GET /requests`
+- `GET /requests`
 
 ```bash
 curl http://127.0.0.1:8000/requests \
   -H "X-API-Key: your-frontend-secret"
 ```
 
-Returns saved request metadata, generated ideas, usage, and timestamps.
+Returns previously saved requests ordered from newest to oldest.
+
+## Validation approach
+
+The server uses Pydantic models in `models.py` for request and response validation, including:
+
+- `IdeaGenerationRequest`
+- `IdeaGenerationResponse`
+- `StoredIdeaRequest`
+- `TokenUsage`
+
+FastAPI validates incoming JSON against these models before route logic executes.
 
 ## Project structure
 
-```
-idea-generator/
-├── main.py          # FastAPI app, lifespan, router mount
-├── routers.py       # API routes (POST /, GET /requests)
+```text
+packages/server/
+├── main.py          # FastAPI app setup, middleware, router mounting
+├── routers.py       # HTTP routes
 ├── auth.py          # API key dependency
-├── db.py            # SQLite init, get_db, save/list ideas
+├── db.py            # SQLite initialization and queries
 ├── models.py        # Pydantic request/response models
-├── services.py      # OpenRouter idea generation
-├── requirements.txt
+├── services.py      # OpenRouter integration and response normalization
 ├── tests/
-│   └── test_app.py  # API and auth tests
-├── .env.example
+│   └── test_app.py  # API tests
+├── requirements.txt
+├── run.sh           # local helper used by the root dev command
 └── README.md
 ```
 
-Run from project root so imports resolve. When you add more domains (e.g. users, admin), consider moving routes into `routers/` (e.g. `routers/ideas.py`) or an `app/` package.
-
 ## Tests
 
+Run the current server test suite with:
+
 ```bash
-.venv/bin/python -m unittest tests.test_app -v
+./.venv/bin/python -m unittest tests.test_app -v
 ```
 
-## CI
+## Deploy to Railway
 
-Tests run on GitHub Actions when you **push to `dev`** or open a **pull request targeting `dev`**. Workflow: [`.github/workflows/test.yml`](.github/workflows/test.yml).
+The service uses a local SQLite file by default, so a separate database service is not required.
+
+Because Railway containers are ephemeral, use a volume if you want persisted data:
+
+1. create a volume mounted at a directory such as `/data`
+2. set `IDEAS_DB_PATH=/data/ideas.db`
+3. set `OPENROUTER_API_KEY` and `API_SECRET_KEY`
+4. use the start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+
+If persistence is not needed, you can keep the default `ideas.db` path inside the container.
