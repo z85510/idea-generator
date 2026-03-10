@@ -1,15 +1,6 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 
-import { Badge } from '@/components/ui/badge';
-import {
-   Card,
-   CardDescription,
-   CardHeader,
-   CardTitle,
-} from '@/components/ui/card';
-
-import { fetchWelcomeMessage, generateIdeas } from './api';
-import { SUPPORTED_MODELS } from './constants';
+import { generateIdeas } from './api';
 import { IdeaGenerationQuestions } from './components/idea-generation-questions';
 import { IdeaGenerationSettings } from './components/idea-generation-settings';
 import {
@@ -22,33 +13,12 @@ import { IdeaGenerationResult } from './components/idea-generation-result';
 import type { IdeaGenerationResponse } from './types';
 
 function IdeaGeneratorPage() {
-   const [welcomeMessage, setWelcomeMessage] = useState('Idea Generator');
    const [formState, setFormState] = useState(
       createInitialIdeaGeneratorFormState
    );
    const [result, setResult] = useState<IdeaGenerationResponse | null>(null);
    const [errorMessage, setErrorMessage] = useState('');
    const [isSubmitting, setIsSubmitting] = useState(false);
-
-   useEffect(() => {
-      let isMounted = true;
-
-      fetchWelcomeMessage()
-         .then((response) => {
-            if (isMounted) {
-               setWelcomeMessage(response.message);
-            }
-         })
-         .catch(() => {
-            if (isMounted) {
-               setWelcomeMessage('Idea Generator');
-            }
-         });
-
-      return () => {
-         isMounted = false;
-      };
-   }, []);
 
    function handleFieldChange(
       field:
@@ -115,24 +85,6 @@ function IdeaGeneratorPage() {
    return (
       <main className="min-h-screen bg-background px-4 py-8 text-foreground">
          <div className="mx-auto flex max-w-7xl flex-col gap-6">
-            <Card>
-               <CardHeader>
-                  <CardTitle>{welcomeMessage}</CardTitle>
-                  <CardDescription>
-                     Generate structured ideas with a selected model, a tuned
-                     temperature, and metadata captured through dedicated UI
-                     fields.
-                  </CardDescription>
-                  <div className="flex flex-wrap gap-2 pt-2">
-                     {SUPPORTED_MODELS.map((model) => (
-                        <Badge key={model.value} variant="outline">
-                           {model.label}
-                        </Badge>
-                     ))}
-                  </div>
-               </CardHeader>
-            </Card>
-
             <div className="grid gap-6 xl:grid-cols-3 xl:items-start">
                <form
                   onSubmit={handleSubmit}

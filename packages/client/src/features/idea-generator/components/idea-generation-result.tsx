@@ -54,14 +54,6 @@ function IdeaGenerationResult({
 
    return (
       <div className="grid gap-4">
-         <Alert>
-            <HugeiconsIcon icon={InformationCircleIcon} />
-            <AlertTitle>Ideas generated successfully</AlertTitle>
-            <AlertDescription>
-               Request {result.request_id} completed with {result.model}.
-            </AlertDescription>
-         </Alert>
-
          <Card>
             <CardHeader>
                <CardTitle>Generated ideas</CardTitle>
@@ -78,7 +70,6 @@ function IdeaGenerationResult({
                      Request ID: {result.request_id}
                   </Badge>
                   <Badge variant="outline">Model: {result.model}</Badge>
-                  <Badge variant="outline">User: {result.user_id}</Badge>
                </div>
 
                <div className="grid gap-3">
