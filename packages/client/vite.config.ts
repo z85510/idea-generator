@@ -23,15 +23,5 @@ export default defineConfig(({ mode }) => {
             },
          },
       },
-      preview: {
-         port: parseInt(process.env.PORT || '3000'),
-         host: '0.0.0.0',
-         proxy: {
-            '/api': {
-               target: env.BACKEND_URL || 'http://localhost:8000',
-               changeOrigin: true,
-            },
-         },
-      },
    };
 });
