@@ -38,6 +38,7 @@ def welcome():
     response_description="The stored request data and the five generated ideas.",
     dependencies=[Depends(require_api_key)],
 )
+@router.post("/", response_model=IdeaGenerationResponse, include_in_schema=False, dependencies=[Depends(require_api_key)])
 @router.post("/api/generate_idea", response_model=IdeaGenerationResponse, include_in_schema=False, dependencies=[Depends(require_api_key)])
 async def generate_idea(
     request: IdeaGenerationRequest,
