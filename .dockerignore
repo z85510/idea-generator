@@ -1,0 +1,9 @@
+node_modules
+packages/client/node_modules
+packages/client/dist
+packages/server/.venv
+packages/server/__pycache__
+packages/server/tests/__pycache__
+packages/server/*.db
+.git
+.DS_Store

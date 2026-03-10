@@ -164,11 +164,13 @@ Run the current server test suite with:
 
 The service uses a local SQLite file by default, so a separate database service is not required.
 
+The repo includes a Dockerfile for Railway at `packages/server/Dockerfile`.
+
 Because Railway containers are ephemeral, use a volume if you want persisted data:
 
 1. create a volume mounted at a directory such as `/data`
 2. set `IDEAS_DB_PATH=/data/ideas.db`
 3. set `OPENROUTER_API_KEY` and `API_SECRET_KEY`
-4. use the start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+4. deploy with Dockerfile path: `packages/server/Dockerfile`
 
 If persistence is not needed, you can keep the default `ideas.db` path inside the container.

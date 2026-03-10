@@ -64,6 +64,14 @@ Production assets are generated into `dist/` when running:
 bun run build
 ```
 
+## Production server
+
+The package includes `server.ts`, a Bun server that serves `dist/` and proxies `/api/*` to `BACKEND_URL`.
+
+```bash
+BACKEND_URL=http://localhost:8000 bun run start
+```
+
 ## Related docs
 
 - monorepo overview: `../../README.md`

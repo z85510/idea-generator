@@ -114,3 +114,48 @@ When the server is running, FastAPI exposes:
 
 For backend-specific details, see `packages/server/README.md`.
 For frontend-specific details, see `packages/client/README.md`.
+
+## Docker and Railway
+
+The repo includes separate Dockerfiles for each Railway service:
+
+- client: `packages/client/Dockerfile`
+- server: `packages/server/Dockerfile`
+
+### Client service
+
+Build and run locally:
+
+```bash
+docker build -f packages/client/Dockerfile -t idea-generator-client .
+docker run --rm -p 3000:3000 -e BACKEND_URL=http://host.docker.internal:8000 idea-generator-client
+```
+
+The client container serves the built SPA and proxies `/api/*` to `BACKEND_URL`.
+
+### Server service
+
+Build and run locally:
+
+```bash
+docker build -f packages/server/Dockerfile -t idea-generator-server .
+docker run --rm -p 8000:8000 \
+  -e OPENROUTER_API_KEY=your-key \
+  -e API_SECRET_KEY=your-secret \
+  idea-generator-server
+```
+
+### Railway setup
+
+Create two Railway services from this repo:
+
+1. **server service**
+   - keep the service root at the repo root so Docker can use the full monorepo context
+   - Dockerfile path: `packages/server/Dockerfile`
+   - required envs: `OPENROUTER_API_KEY`, `API_SECRET_KEY`
+   - optional envs: `IDEAS_DB_PATH`, `ALLOWED_ORIGINS`, `OPENROUTER_MODEL`, `OPENROUTER_TEMPERATURE`, `OUTPUT_NUMBER`
+   - attach a volume and set `IDEAS_DB_PATH=/data/ideas.db` if you want SQLite persistence
+2. **client service**
+   - keep the service root at the repo root so Bun workspace files are available during the image build
+   - Dockerfile path: `packages/client/Dockerfile`
+   - required env: `BACKEND_URL=https://<your-server-domain>`
