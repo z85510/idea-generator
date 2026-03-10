@@ -1,22 +1,24 @@
 {
-   "name": "idea-generator",
-   "module": "index.ts",
-   "type": "module",
-   "private": true,
-   "scripts": {
-      "dev": "bun run index.ts",
-      "format": "prettier --write ."
-   },
-   "devDependencies": {
-      "@types/bun": "latest",
-      "concurrently": "^9.2.1",
-      "husky": "^9.1.7",
-      "prettier": "^3.8.1"
-   },
-   "peerDependencies": {
-      "typescript": "^5"
-   },
-   "workspaces": [
-      "packages/*"
-   ]
+  "name": "idea-generator",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun run index.ts",
+    "format": "prettier --write .",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "concurrently": "^9.2.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.3.3",
+    "prettier": "^3.8.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }

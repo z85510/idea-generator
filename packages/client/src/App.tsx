@@ -17,11 +17,7 @@ function App() {
             {message}
          </Label>
          <div className="flex flex-col gap-2">
-            <Button variant="outline">Click me (outline)</Button>
-            <Button variant="ghost">Click me (ghost)</Button>
-            <Button variant="secondary">Click me (secondary)</Button>
-            <Button variant="destructive">Click me (destructive)</Button>
-            <Button variant="link">Click me (link)</Button>
+            <Button variant="outline">Click me</Button>
          </div>
       </div>
    );
