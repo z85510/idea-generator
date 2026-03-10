@@ -45,10 +45,6 @@ function IdeaGenerationSettings({
    onFieldChange,
    onTemperatureChange,
 }: IdeaGenerationSettingsProps) {
-   const selectedModel = SUPPORTED_MODELS.find(
-      (model) => model.value === formState.model
-   );
-
    return (
       <Card className="xl:sticky xl:top-8">
          <CardHeader>

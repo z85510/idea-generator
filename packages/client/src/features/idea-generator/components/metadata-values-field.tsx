@@ -9,14 +9,8 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-   Card,
-   CardContent,
-   CardDescription,
-   CardHeader,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
 type MetadataValuesFieldProps = {
    question: {
