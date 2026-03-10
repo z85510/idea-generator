@@ -1,11 +1,11 @@
 ---
 name: python-backend
 description: >
-  Python backend development expertise for FastAPI, security patterns, database operations,
-  Upstash integrations, and code quality. Use when: (1) Building REST APIs with FastAPI,
-  (2) Implementing JWT/OAuth2 authentication, (3) Setting up SQLAlchemy/async databases,
-  (4) Integrating Redis/Upstash caching, (5) Refactoring AI-generated Python code (deslopification),
-  (6) Designing API patterns, or (7) Optimizing backend performance.
+   Python backend development expertise for FastAPI, security patterns, database operations,
+   Upstash integrations, and code quality. Use when: (1) Building REST APIs with FastAPI,
+   (2) Implementing JWT/OAuth2 authentication, (3) Setting up SQLAlchemy/async databases,
+   (4) Integrating Redis/Upstash caching, (5) Refactoring AI-generated Python code (deslopification),
+   (6) Designing API patterns, or (7) Optimizing backend performance.
 ---
 
 # python-backend
@@ -145,12 +145,12 @@ def protected(request: Request):
 
 For detailed patterns, see:
 
-| Document | Content |
-|----------|---------|
-| `references/fastapi_patterns.md` | Project structure, async, Pydantic, dependencies, testing |
-| `references/security_patterns.md` | JWT, OAuth2, password hashing, CORS, API keys |
+| Document                          | Content                                                   |
+| --------------------------------- | --------------------------------------------------------- |
+| `references/fastapi_patterns.md`  | Project structure, async, Pydantic, dependencies, testing |
+| `references/security_patterns.md` | JWT, OAuth2, password hashing, CORS, API keys             |
 | `references/database_patterns.md` | SQLAlchemy async, transactions, eager loading, migrations |
-| `references/upstash_patterns.md` | Redis, rate limiting, QStash background jobs |
+| `references/upstash_patterns.md`  | Redis, rate limiting, QStash background jobs              |
 
 ## Resources
 

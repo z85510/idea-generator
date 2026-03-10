@@ -48,13 +48,13 @@ async def transfer_funds(session: AsyncSession, from_id: int, to_id: int, amount
     async with session.begin_nested():  # Creates a savepoint
         from_account = await session.get(Account, from_id)
         to_account = await session.get(Account, to_id)
-        
+
         if from_account.balance < amount:
             raise InsufficientFunds()
-        
+
         from_account.balance -= amount
         to_account.balance += amount
-    
+
     await session.commit()
 ```
 
@@ -63,11 +63,12 @@ async def transfer_funds(session: AsyncSession, from_id: int, to_id: int, amount
 ## Naming Conventions
 
 Be consistent with names:
+
 1. lower_case_snake
 2. singular form (e.g. post, post_like, user_playlist)
 3. group similar tables with module prefix (e.g. payment_account, payment_bill)
 4. stay consistent across tables
-5. _at suffix for datetime, _date suffix for date
+5. \_at suffix for datetime, \_date suffix for date
 
 ### Constraint Naming
 
@@ -148,9 +149,9 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 class Parent(Base):
     __tablename__ = "parent"
-    
+
     id: Mapped[int] = mapped_column(primary_key=True)
-    
+
     children: Mapped[list["Child"]] = relationship(
         back_populates="parent",
         cascade="all, delete",
@@ -159,12 +160,12 @@ class Parent(Base):
 
 class Child(Base):
     __tablename__ = "child"
-    
+
     id: Mapped[int] = mapped_column(primary_key=True)
     parent_id: Mapped[int] = mapped_column(
         ForeignKey("parent.id", ondelete="CASCADE")
     )
-    
+
     parent: Mapped["Parent"] = relationship(back_populates="children")
 ```
 
@@ -182,18 +183,18 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 class SoftDeleteMixin:
     deleted_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), 
+        DateTime(timezone=True),
         default=None,
         index=True
     )
-    
+
     @hybrid_property
     def is_deleted(self) -> bool:
         return self.deleted_at is not None
-    
+
     def soft_delete(self) -> None:
         self.deleted_at = datetime.utcnow()
-    
+
     def restore(self) -> None:
         self.deleted_at = None
 ```
@@ -217,11 +218,11 @@ Use version_id_col to prevent lost updates:
 ```python
 class Article(Base):
     __tablename__ = "article"
-    
+
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(200))
     version_id: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
-    
+
     __mapper_args__ = {
         "version_id_col": version_id
     }
@@ -292,16 +293,16 @@ from sqlalchemy import update
 
 async def deactivate_old_users(session: AsyncSession, days: int = 365):
     from datetime import datetime, timedelta
-    
+
     cutoff = datetime.utcnow() - timedelta(days=days)
-    
+
     result = await session.execute(
         update(User)
         .where(User.last_login < cutoff)
         .values(is_active=False)
     )
     await session.commit()
-    
+
     return result.rowcount
 ```
 
@@ -314,7 +315,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 async def upsert_user(session: AsyncSession, user_data: dict):
     stmt = pg_insert(User).values(**user_data)
-    
+
     stmt = stmt.on_conflict_do_update(
         index_elements=[User.email],
         set_={
@@ -322,7 +323,7 @@ async def upsert_user(session: AsyncSession, user_data: dict):
             "updated_at": func.now(),
         }
     )
-    
+
     await session.execute(stmt)
     await session.commit()
 ```
@@ -338,7 +339,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 class User(Base):
     __tablename__ = "user"
-    
+
     id: Mapped[uuid.UUID] = mapped_column(
         Uuid,
         primary_key=True,
@@ -351,10 +352,10 @@ class User(Base):
 ```python
 class User(Base):
     __tablename__ = "user"
-    
+
     # Internal ID for joins (faster)
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    
+
     # Public ID for API (safe to expose)
     public_id: Mapped[uuid.UUID] = mapped_column(
         Uuid,
@@ -379,16 +380,16 @@ class BaseRepository(Generic[ModelType]):
     def __init__(self, session: AsyncSession, model: Type[ModelType]):
         self.session = session
         self.model = model
-    
+
     async def get(self, id: int) -> ModelType | None:
         return await self.session.get(self.model, id)
-    
+
     async def get_all(self, skip: int = 0, limit: int = 100) -> list[ModelType]:
         result = await self.session.scalars(
             select(self.model).offset(skip).limit(limit)
         )
         return result.all()
-    
+
     async def create(self, obj: ModelType) -> ModelType:
         self.session.add(obj)
         await self.session.commit()
@@ -398,7 +399,7 @@ class BaseRepository(Generic[ModelType]):
 class UserRepository(BaseRepository[User]):
     def __init__(self, session: AsyncSession):
         super().__init__(session, User)
-    
+
     async def get_by_email(self, email: str) -> User | None:
         result = await self.session.scalar(
             select(User).where(User.email == email)

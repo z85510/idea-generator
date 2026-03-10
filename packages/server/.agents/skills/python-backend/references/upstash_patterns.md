@@ -156,15 +156,15 @@ CACHE_TTL = 600  # 10 minutes
 @app.get("/data/{id}")
 def get_data(id: str):
     cache_key = f"data:{id}"
-    
+
     # Check cache
     cached = redis.get(cache_key)
     if cached:
         return {"source": "cache", "data": cached}
-    
+
     # Fetch from source
     data = fetch_from_database(id)
-    
+
     # Cache and return
     redis.setex(cache_key, CACHE_TTL, data)
     return {"source": "db", "data": data}
@@ -271,7 +271,7 @@ ratelimits = {
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
     result = ratelimit.limit(request.client.host)
-    
+
     if not result.allowed:
         return Response(
             content="Rate limit exceeded",
@@ -282,7 +282,7 @@ async def rate_limit_middleware(request: Request, call_next):
                 "Retry-After": str(result.reset)
             }
         )
-    
+
     response = await call_next(request)
     response.headers["X-RateLimit-Limit"] = str(result.limit)
     response.headers["X-RateLimit-Remaining"] = str(result.remaining)
@@ -351,7 +351,7 @@ receiver = Receiver(
 async def webhook(request: Request):
     signature = request.headers.get("Upstash-Signature")
     body = await request.body()
-    
+
     try:
         receiver.verify(
             body=body.decode(),
@@ -360,7 +360,7 @@ async def webhook(request: Request):
         )
     except Exception:
         raise HTTPException(401, "Invalid signature")
-    
+
     data = await request.json()
     return await process_task(data)
 ```

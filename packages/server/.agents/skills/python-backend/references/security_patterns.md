@@ -64,7 +64,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
         payload = decode_access_token(token)
     except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, 
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token"
         )
     return {"user_id": payload["sub"]}
@@ -86,7 +86,7 @@ def require_api_key(
 ) -> None:
     if not x_api_key or x_api_key != API_KEY:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, 
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid API key"
         )
 ```
