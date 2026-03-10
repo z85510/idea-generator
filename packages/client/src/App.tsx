@@ -1,26 +1,7 @@
-import { useEffect, useState } from 'react';
-import { Label } from './components/ui/label';
-import { Button } from './components/ui/button';
+import IdeaGeneratorPage from '@/features/idea-generator/idea-generator-page';
 
 function App() {
-   const [message, setMessage] = useState('');
-
-   useEffect(() => {
-      fetch('/api/')
-         .then((response) => response.json())
-         .then((data) => setMessage(data.message));
-   }, []);
-
-   return (
-      <div className="flex flex-col items-center justify-center h-screen">
-         <Label className="text-2xl font-bold text-red-500 p-4 text-center">
-            {message}
-         </Label>
-         <div className="flex flex-col gap-2">
-            <Button variant="outline">Click me</Button>
-         </div>
-      </div>
-   );
+   return <IdeaGeneratorPage />;
 }
 
 export default App;

@@ -45,7 +45,15 @@ async def generate_idea(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     ttl = _cache_ttl_days()
-    existing = await find_idea_by_input(db, request.prompt_template, request.metadata, ttl_days=ttl)
+    existing = await find_idea_by_input(
+        db,
+        request.prompt_template,
+        request.metadata,
+        model=request.model,
+        temperature=request.temperature,
+        number_of_ideas=request.number_of_ideas,
+        ttl_days=ttl,
+    )
     if existing is not None:
         return IdeaGenerationResponse(
             request_id=str(existing["id"]),
@@ -69,6 +77,9 @@ async def generate_idea(
         user_id=request.user_id,
         metadata=request.metadata,
         prompt_template=request.prompt_template,
+        request_model=request.model,
+        request_temperature=request.temperature,
+        request_number_of_ideas=request.number_of_ideas,
         ideas=json.dumps(generation_result.ideas),
         model=generation_result.model,
         prompt_tokens=generation_result.usage.prompt_tokens,

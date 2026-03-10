@@ -14,10 +14,14 @@ API_HEADERS = {"X-API-Key": "frontend-secret"}
 
 
 class MockResponse:
+    def __init__(self, request_payload: dict | None = None) -> None:
+        self.request_payload = request_payload or {}
+
     def raise_for_status(self) -> None:
         return None
 
     def json(self) -> dict:
+        requested_model = self.request_payload.get("model", "openai/gpt-4o-mini")
         return {
             "choices": [
                 {
@@ -30,6 +34,11 @@ class MockResponse:
                                     "A community app for testing social-impact project concepts.",
                                     "A skill-sharing marketplace for people building meaningful tools.",
                                     "A research dashboard that maps personal skills to market needs.",
+                                    "A solo-founder CRM for tracking early customer interviews.",
+                                    "A micro-learning app for career transitions into design.",
+                                    "A founder wellness planner for burnout prevention.",
+                                    "A local community marketplace for circular economy products.",
+                                    "A product validation tool for mission-driven startups.",
                                 ]
                             }
                         ),
@@ -41,11 +50,14 @@ class MockResponse:
                 "completion_tokens": 180,
                 "total_tokens": 300,
             },
-            "model": "openai/gpt-4o-mini",
+            "model": requested_model,
         }
 
 
 class MockAsyncClient:
+    last_payload: dict | None = None
+    call_count = 0
+
     def __init__(self, *args, **kwargs) -> None:
         pass
 
@@ -56,10 +68,16 @@ class MockAsyncClient:
         return False
 
     async def post(self, *args, **kwargs) -> MockResponse:
-        return MockResponse()
+        type(self).call_count += 1
+        type(self).last_payload = kwargs.get("json")
+        return MockResponse(type(self).last_payload)
 
 
 class IdeaGeneratorAppTests(unittest.TestCase):
+    def setUp(self) -> None:
+        MockAsyncClient.last_payload = None
+        MockAsyncClient.call_count = 0
+
     def test_generate_idea_persists_record(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             database_path = os.path.join(temp_dir, "test_ideas.db")
@@ -159,6 +177,86 @@ class IdeaGeneratorAppTests(unittest.TestCase):
             self.assertEqual(len(history_payload), 1)
             self.assertEqual(history_payload[0]["user_id"], "user-2")
             self.assertEqual(history_payload[0]["usage"]["prompt_tokens"], 120)
+
+    def test_generate_idea_uses_request_generation_overrides(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            database_path = os.path.join(temp_dir, "override_ideas.db")
+            with patch.dict(
+                os.environ,
+                {
+                    "IDEAS_DB_PATH": database_path,
+                    "API_SECRET_KEY": API_HEADERS["X-API-Key"],
+                    "OPENROUTER_API_KEY": "test-key",
+                    "OPENROUTER_MODEL": "openai/gpt-4o-mini",
+                    "OPENROUTER_TEMPERATURE": "0.9",
+                    "OUTPUT_NUMBER": "5",
+                },
+                clear=False,
+            ):
+                with patch("services.httpx.AsyncClient", MockAsyncClient):
+                    with TestClient(app) as client:
+                        response = client.post(
+                            "/",
+                            json={
+                                "user_id": "user-override",
+                                "prompt_template": "You generate practical and creative project ideas.",
+                                "metadata": {
+                                    "What do you love": ["tech"],
+                                    "What does the world need": ["education"],
+                                },
+                                "model": "anthropic/claude-haiku-4.5",
+                                "temperature": 0.4,
+                                "number_of_ideas": 3,
+                            },
+                            headers=API_HEADERS,
+                        )
+
+            self.assertEqual(response.status_code, 200)
+            payload = response.json()
+            self.assertEqual(len(payload["ideas"]), 3)
+            self.assertEqual(payload["model"], "anthropic/claude-haiku-4.5")
+            self.assertEqual(MockAsyncClient.last_payload["model"], "anthropic/claude-haiku-4.5")
+            self.assertEqual(MockAsyncClient.last_payload["temperature"], 0.4)
+
+    def test_generation_overrides_create_distinct_cache_entries(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            database_path = os.path.join(temp_dir, "cache_options_ideas.db")
+            with patch.dict(
+                os.environ,
+                {
+                    "IDEAS_DB_PATH": database_path,
+                    "API_SECRET_KEY": API_HEADERS["X-API-Key"],
+                    "OPENROUTER_API_KEY": "test-key",
+                },
+                clear=False,
+            ):
+                with patch("services.httpx.AsyncClient", MockAsyncClient):
+                    with TestClient(app) as client:
+                        base_payload = {
+                            "user_id": "user-cache",
+                            "prompt_template": "You generate practical and creative project ideas.",
+                            "metadata": {
+                                "What do you love": ["design"],
+                                "What does the world need": ["education"],
+                            },
+                        }
+                        default_response = client.post("/", json=base_payload, headers=API_HEADERS)
+                        override_response = client.post(
+                            "/",
+                            json={**base_payload, "number_of_ideas": 3},
+                            headers=API_HEADERS,
+                        )
+
+            self.assertEqual(default_response.status_code, 200)
+            self.assertEqual(override_response.status_code, 200)
+            self.assertEqual(MockAsyncClient.call_count, 2)
+
+            connection = sqlite3.connect(database_path)
+            try:
+                rows = connection.execute("SELECT id FROM idea_requests").fetchall()
+            finally:
+                connection.close()
+            self.assertEqual(len(rows), 2, "different generation overrides should not share cache")
 
     def test_requests_are_rejected_without_valid_api_key(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

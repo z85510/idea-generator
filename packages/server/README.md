@@ -37,9 +37,10 @@ Update `.env` with real values before starting the server.
 - `OPENROUTER_API_KEY`: backend secret used to call OpenRouter
 - `API_SECRET_KEY`: shared secret expected in `X-API-Key`
 - `OPENROUTER_MODEL` _(optional)_: defaults to `openai/gpt-4o-mini`
+- `OPENROUTER_TEMPERATURE` _(optional)_: defaults to `0.9`
 - `IDEAS_DB_PATH` _(optional)_: defaults to `ideas.db`
 - `IDEAS_CACHE_TTL_DAYS` _(optional)_: limits cache hits to recent entries only
-- `OUTPUT_NUMBER` _(optional)_: number of ideas requested from the provider, while the API still normalizes output to 5 items
+- `OUTPUT_NUMBER` _(optional)_: default number of ideas to generate when the request does not provide `number_of_ideas`
 - `ALLOWED_ORIGINS` _(optional)_: comma-separated browser origins allowed to call the API
 
 ## Run locally
@@ -87,6 +88,9 @@ curl -X POST http://127.0.0.1:8000/api/ \
   -d '{
     "user_id": "user-1",
     "prompt_template": "You generate practical and creative project ideas.",
+    "model": "openai/gpt-4o-mini",
+    "temperature": 0.9,
+    "number_of_ideas": 5,
     "metadata": {
       "What do you love": ["tech", "art"],
       "What does the world need": ["education"],

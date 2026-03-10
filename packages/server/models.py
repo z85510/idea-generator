@@ -19,6 +19,22 @@ class IdeaGenerationRequest(BaseModel):
             }
         },
     )
+    model: str | None = Field(
+        default=None,
+        description="Optional model override. If omitted, the server default is used.",
+    )
+    temperature: float | None = Field(
+        default=None,
+        ge=0,
+        le=2,
+        description="Optional sampling temperature override. If omitted, the server default is used.",
+    )
+    number_of_ideas: int | None = Field(
+        default=None,
+        ge=1,
+        le=20,
+        description="Optional number of ideas to generate. If omitted, the server default is used.",
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -31,6 +47,9 @@ class IdeaGenerationRequest(BaseModel):
                     "What are you good at": ["design", "coding"],
                     "Extra information": ["I am a software engineer", "I am a designer"],
                 },
+                "model": "openai/gpt-4o-mini",
+                "temperature": 0.9,
+                "number_of_ideas": 5,
             }
         }
     }
@@ -47,7 +66,7 @@ class IdeaGenerationResponse(BaseModel):
     user_id: str = Field(description="User identifier passed in the request.")
     prompt_template: str = Field(description="Prompt template used to generate the ideas.")
     metadata: dict[str, list[str]] = Field(default_factory=dict, description="Original metadata submitted by the client.")
-    ideas: list[str] = Field(default_factory=list, description="Five generated project ideas.")
+    ideas: list[str] = Field(default_factory=list, description="Generated project ideas.")
     usage: TokenUsage = Field(default_factory=TokenUsage)
     model: str = Field(description="Model used to generate the ideas.")
     created_at: datetime = Field(description="UTC timestamp when the request was saved.")

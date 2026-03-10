@@ -46,10 +46,19 @@ async def find_idea_by_input(
     prompt_template: str,
     metadata: dict[str, Any],
     *,
+    model: str | None = None,
+    temperature: float | None = None,
+    number_of_ideas: int | None = None,
     ttl_days: int | None = None,
 ) -> dict[str, Any] | None:
     """Look up cached idea by deterministic metadata hash (indexed, fast)."""
-    h = metadata_hash(prompt_template, metadata)
+    h = metadata_hash(
+        prompt_template,
+        metadata,
+        model=model,
+        temperature=temperature,
+        number_of_ideas=number_of_ideas,
+    )
     if ttl_days is not None:
         sql = """
             SELECT
@@ -103,6 +112,9 @@ async def save_idea(
     ideas: str,
     model: str,
     prompt_template: str,
+    request_model: str | None = None,
+    request_temperature: float | None = None,
+    request_number_of_ideas: int | None = None,
     prompt_tokens: int | None,
     completion_tokens: int | None,
     total_tokens: int | None,
@@ -110,7 +122,13 @@ async def save_idea(
     updated_at: str,
 ) -> dict[str, Any]:
     """Insert idea request or skip if same metadata_hash exists (UPSERT cache write)."""
-    h = metadata_hash(prompt_template, metadata)
+    h = metadata_hash(
+        prompt_template,
+        metadata,
+        model=request_model,
+        temperature=request_temperature,
+        number_of_ideas=request_number_of_ideas,
+    )
     await connection.execute(
         """
         INSERT INTO idea_requests (
