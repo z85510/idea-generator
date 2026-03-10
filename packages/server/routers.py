@@ -20,14 +20,14 @@ def _cache_ttl_days() -> int | None:
     except ValueError:
         return None
 
-router = APIRouter(
-    dependencies=[Depends(require_api_key)],
-    tags=["ideas"],
-)
+router = APIRouter(tags=["ideas"])
 
+@router.get("/api/")
+def welcome():
+    return {"message": "Welcome to the Idea Generator API"}
 
 @router.post(
-    "/",
+    "/api/",
     response_model=IdeaGenerationResponse,
     summary="Generate five project ideas",
     description=(
@@ -36,8 +36,9 @@ router = APIRouter(
         "stores the request and response, and returns them."
     ),
     response_description="The stored request data and the five generated ideas.",
+    dependencies=[Depends(require_api_key)],
 )
-@router.post("/generate_idea", response_model=IdeaGenerationResponse, include_in_schema=False)
+@router.post("/api/generate_idea", response_model=IdeaGenerationResponse, include_in_schema=False, dependencies=[Depends(require_api_key)])
 async def generate_idea(
     request: IdeaGenerationRequest,
     db: aiosqlite.Connection = Depends(get_db),
@@ -98,6 +99,7 @@ async def generate_idea(
     summary="List stored idea requests",
     description="Returns previously saved requests, generated ideas, and token usage.",
     response_description="Saved idea-generation history ordered from newest to oldest.",
+    dependencies=[Depends(require_api_key)],
 )
 async def get_requests(db: aiosqlite.Connection = Depends(get_db)):
     rows = await list_idea_requests(db)

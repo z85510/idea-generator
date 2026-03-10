@@ -232,7 +232,7 @@ class IdeaGeneratorAppTests(unittest.TestCase):
     def test_requests_with_disallowed_origin_are_rejected(self) -> None:
         with patch.dict(
             os.environ,
-            {"ALLOWED_ORIGINS": "https://app.siift.ai,https://siif.ai"},
+            {"ALLOWED_ORIGINS": "http://localhost:3000,http://localhost:3001"},
             clear=False,
         ):
             from importlib import reload
