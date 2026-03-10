@@ -8,36 +8,26 @@ export const SUPPORTED_MODELS = [
    {
       label: 'OpenAI GPT-4o Mini',
       value: 'openai/gpt-4o-mini',
-      description: 'Fast default model already used by the backend.',
    },
    {
       label: 'OpenAI GPT-4.1 Mini',
       value: 'openai/gpt-4.1-mini',
-      description:
-         'Balanced OpenAI option for sharper structured idea exploration.',
    },
    {
       label: 'Anthropic Claude Haiku 4.5',
       value: 'anthropic/claude-haiku-4.5',
-      description: 'Lightweight Claude option referenced in the server config.',
    },
    {
       label: 'Anthropic Claude Sonnet 4',
       value: 'anthropic/claude-sonnet-4',
-      description:
-         'Stronger reasoning and synthesis for richer idea generation.',
    },
    {
       label: 'Google Gemini 2.0 Flash',
       value: 'google/gemini-2.0-flash-001',
-      description:
-         'Fast Gemini option that works well for broad ideation passes.',
    },
    {
       label: 'Meta Llama 3.3 70B Instruct',
       value: 'meta-llama/llama-3.3-70b-instruct',
-      description:
-         'Large open model for varied brainstorming and alternative angles.',
    },
 ] as const;
 

@@ -46,6 +46,7 @@ async def find_idea_by_input(
     prompt_template: str,
     metadata: dict[str, Any],
     *,
+    user_id: str | None = None,
     model: str | None = None,
     temperature: float | None = None,
     number_of_ideas: int | None = None,
@@ -59,8 +60,18 @@ async def find_idea_by_input(
         temperature=temperature,
         number_of_ideas=number_of_ideas,
     )
+    filters = ["metadata_hash = ?"]
+    args: list[Any] = [h]
+
+    if user_id is not None:
+        filters.append("user_id = ?")
+        args.append(user_id)
+
     if ttl_days is not None:
-        sql = """
+        filters.append("created_at > datetime('now', ?)")
+        args.append(f"-{ttl_days} days")
+
+    sql = f"""
             SELECT
                 id,
                 user_id,
@@ -74,30 +85,10 @@ async def find_idea_by_input(
                 created_at,
                 updated_at
             FROM idea_requests
-            WHERE metadata_hash = ?
-              AND created_at > datetime('now', ?)
+            WHERE {' AND '.join(filters)}
+            ORDER BY id DESC
             LIMIT 1
             """
-        args = (h, f"-{ttl_days} days")
-    else:
-        sql = """
-            SELECT
-                id,
-                user_id,
-                metadata,
-                metadata_hash,
-                ideas,
-                model,
-                prompt_tokens,
-                completion_tokens,
-                total_tokens,
-                created_at,
-                updated_at
-            FROM idea_requests
-            WHERE metadata_hash = ?
-            LIMIT 1
-            """
-        args = (h,)
     cursor = await connection.execute(sql, args)
     row = await cursor.fetchone()
     await cursor.close()
@@ -121,7 +112,7 @@ async def save_idea(
     created_at: str,
     updated_at: str,
 ) -> dict[str, Any]:
-    """Insert idea request or skip if same metadata_hash exists (UPSERT cache write)."""
+    """Insert a generated idea request as a new history row."""
     h = metadata_hash(
         prompt_template,
         metadata,
@@ -129,7 +120,7 @@ async def save_idea(
         temperature=request_temperature,
         number_of_ideas=request_number_of_ideas,
     )
-    await connection.execute(
+    cursor = await connection.execute(
         """
         INSERT INTO idea_requests (
             user_id,
@@ -144,7 +135,6 @@ async def save_idea(
             updated_at
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(metadata_hash) DO NOTHING
         """,
         (
             user_id,
@@ -159,7 +149,12 @@ async def save_idea(
             updated_at,
         ),
     )
+    idea_id = cursor.lastrowid
+    await cursor.close()
     await connection.commit()
+
+    if idea_id is None:
+        raise RuntimeError("Failed to save idea record.")
 
     cursor = await connection.execute(
         """
@@ -176,16 +171,59 @@ async def save_idea(
             created_at,
             updated_at
         FROM idea_requests
-        WHERE metadata_hash = ?
+        WHERE id = ?
         LIMIT 1
         """,
-        (h,),
+        (idea_id,),
     )
     row = await cursor.fetchone()
     await cursor.close()
     if row is None:
         raise RuntimeError("Failed to load saved idea record.")
     return dict(row)
+
+
+async def list_recent_ideas_for_user(
+    connection: aiosqlite.Connection,
+    user_id: str,
+    *,
+    request_limit: int = 20,
+    idea_limit: int = 100,
+) -> list[str]:
+    cursor = await connection.execute(
+        """
+        SELECT ideas
+        FROM idea_requests
+        WHERE user_id = ?
+        ORDER BY id DESC
+        LIMIT ?
+        """,
+        (user_id, request_limit),
+    )
+    rows = await cursor.fetchall()
+    await cursor.close()
+
+    collected_ideas: list[str] = []
+    for row in rows:
+        raw_ideas = row[0]
+        try:
+            parsed_ideas = json.loads(raw_ideas)
+        except (json.JSONDecodeError, TypeError):
+            continue
+
+        if not isinstance(parsed_ideas, list):
+            continue
+
+        for idea in parsed_ideas:
+            cleaned_idea = idea.strip() if isinstance(idea, str) else str(idea).strip()
+            if not cleaned_idea:
+                continue
+
+            collected_ideas.append(cleaned_idea)
+            if len(collected_ideas) >= idea_limit:
+                return collected_ideas
+
+    return collected_ideas
 
 
 async def list_idea_requests(connection: aiosqlite.Connection) -> list[dict[str, Any]]:

@@ -6,7 +6,13 @@ import aiosqlite
 from fastapi import APIRouter, Depends
 
 from auth import require_api_key
-from db import find_idea_by_input, get_db, list_idea_requests, save_idea
+from db import (
+    find_idea_by_input,
+    get_db,
+    list_idea_requests,
+    list_recent_ideas_for_user,
+    save_idea,
+)
 from models import IdeaGenerationRequest, IdeaGenerationResponse, StoredIdeaRequest
 from services import generate_ideas
 
@@ -45,32 +51,44 @@ async def generate_idea(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     ttl = _cache_ttl_days()
-    existing = await find_idea_by_input(
+    same_user_existing = await find_idea_by_input(
         db,
         request.prompt_template,
         request.metadata,
+        user_id=request.user_id,
         model=request.model,
         temperature=request.temperature,
         number_of_ideas=request.number_of_ideas,
         ttl_days=ttl,
     )
-    if existing is not None:
-        return IdeaGenerationResponse(
-            request_id=str(existing["id"]),
-            user_id=request.user_id,
-            prompt_template=request.prompt_template,
-            metadata=request.metadata,
-            ideas=json.loads(existing["ideas"]),
-            usage={
-                "prompt_tokens": existing["prompt_tokens"],
-                "completion_tokens": existing["completion_tokens"],
-                "total_tokens": existing["total_tokens"],
-            },
-            model=existing["model"],
-            created_at=datetime.fromisoformat(existing["created_at"]),
+    if same_user_existing is None:
+        existing = await find_idea_by_input(
+            db,
+            request.prompt_template,
+            request.metadata,
+            model=request.model,
+            temperature=request.temperature,
+            number_of_ideas=request.number_of_ideas,
+            ttl_days=ttl,
         )
+        if existing is not None:
+            return IdeaGenerationResponse(
+                request_id=str(existing["id"]),
+                user_id=request.user_id,
+                prompt_template=request.prompt_template,
+                metadata=request.metadata,
+                ideas=json.loads(existing["ideas"]),
+                usage={
+                    "prompt_tokens": existing["prompt_tokens"],
+                    "completion_tokens": existing["completion_tokens"],
+                    "total_tokens": existing["total_tokens"],
+                },
+                model=existing["model"],
+                created_at=datetime.fromisoformat(existing["created_at"]),
+            )
 
-    generation_result = await generate_ideas(request)
+    previous_ideas = await list_recent_ideas_for_user(db, request.user_id)
+    generation_result = await generate_ideas(request, previous_ideas=previous_ideas)
     now = datetime.now(timezone.utc).isoformat()
     idea_record = await save_idea(
         db,

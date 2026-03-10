@@ -104,19 +104,11 @@ function IdeaGenerationSettings({
                            <SelectItem key={model.value} value={model.value}>
                               <span className="flex flex-col items-start gap-0.5">
                                  <span>{model.label}</span>
-                                 <span className="text-xs text-muted-foreground">
-                                    {model.value}
-                                 </span>
                               </span>
                            </SelectItem>
                         ))}
                      </SelectContent>
                   </Select>
-                  {selectedModel ? (
-                     <CardDescription>
-                        {selectedModel.description}
-                     </CardDescription>
-                  ) : null}
                </div>
 
                <div className="grid gap-2">

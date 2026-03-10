@@ -117,7 +117,6 @@ function MetadataValuesField({
          <CardHeader className="gap-2">
             <div className="flex items-start justify-between gap-3">
                <div className="grid flex-1 gap-2">
-                  <Label htmlFor={`${question.id}-label`}>Question</Label>
                   {isEditingQuestionLabel ? (
                      <Input
                         id={`${question.id}-label`}
@@ -142,17 +141,10 @@ function MetadataValuesField({
                         {question.label || 'Untitled question'}
                      </Button>
                   )}
-                  <CardDescription>{question.description}</CardDescription>
                </div>
-               <Badge variant={values.length ? 'secondary' : 'outline'}>
-                  {values.length} {values.length === 1 ? 'value' : 'values'}
-               </Badge>
             </div>
          </CardHeader>
          <CardContent className="grid gap-3">
-            <div className="grid gap-2">
-               <Label htmlFor={`${question.id}-input`}>Answers</Label>
-            </div>
             <div className="flex flex-col gap-2 sm:flex-row">
                <Input
                   id={`${question.id}-input`}
@@ -178,14 +170,14 @@ function MetadataValuesField({
                   {values.map((value) => (
                      <div
                         key={`${question.id}-${value}`}
-                        className="flex items-center gap-1"
+                        className="flex items-center gap-1 bg-muted rounded-md px-2 py-1"
                      >
                         <Badge variant="secondary" className="h-auto px-2 py-1">
                            {value}
                         </Badge>
                         <Button
                            type="button"
-                           variant="ghost"
+                           variant="outline"
                            size="icon-xs"
                            aria-label={`Remove ${value}`}
                            disabled={disabled}

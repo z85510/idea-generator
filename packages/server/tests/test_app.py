@@ -11,11 +11,28 @@ from main import app
 
 
 API_HEADERS = {"X-API-Key": "frontend-secret"}
+DEFAULT_IDEAS = [
+    "An AI co-founder coach for first-time builders.",
+    "A platform matching artists with emerging tech startups.",
+    "A community app for testing social-impact project concepts.",
+    "A skill-sharing marketplace for people building meaningful tools.",
+    "A research dashboard that maps personal skills to market needs.",
+    "A solo-founder CRM for tracking early customer interviews.",
+    "A micro-learning app for career transitions into design.",
+    "A founder wellness planner for burnout prevention.",
+    "A local community marketplace for circular economy products.",
+    "A product validation tool for mission-driven startups.",
+]
 
 
 class MockResponse:
-    def __init__(self, request_payload: dict | None = None) -> None:
+    def __init__(
+        self,
+        request_payload: dict | None = None,
+        response_ideas: list[str] | None = None,
+    ) -> None:
         self.request_payload = request_payload or {}
+        self.response_ideas = response_ideas or DEFAULT_IDEAS
 
     def raise_for_status(self) -> None:
         return None
@@ -26,22 +43,7 @@ class MockResponse:
             "choices": [
                 {
                     "message": {
-                        "content": json.dumps(
-                            {
-                                "ideas": [
-                                    "An AI co-founder coach for first-time builders.",
-                                    "A platform matching artists with emerging tech startups.",
-                                    "A community app for testing social-impact project concepts.",
-                                    "A skill-sharing marketplace for people building meaningful tools.",
-                                    "A research dashboard that maps personal skills to market needs.",
-                                    "A solo-founder CRM for tracking early customer interviews.",
-                                    "A micro-learning app for career transitions into design.",
-                                    "A founder wellness planner for burnout prevention.",
-                                    "A local community marketplace for circular economy products.",
-                                    "A product validation tool for mission-driven startups.",
-                                ]
-                            }
-                        ),
+                        "content": json.dumps({"ideas": self.response_ideas}),
                     }
                 }
             ],
@@ -56,6 +58,7 @@ class MockResponse:
 
 class MockAsyncClient:
     last_payload: dict | None = None
+    response_ideas: list[str] | None = None
     call_count = 0
 
     def __init__(self, *args, **kwargs) -> None:
@@ -70,13 +73,14 @@ class MockAsyncClient:
     async def post(self, *args, **kwargs) -> MockResponse:
         type(self).call_count += 1
         type(self).last_payload = kwargs.get("json")
-        return MockResponse(type(self).last_payload)
+        return MockResponse(type(self).last_payload, type(self).response_ideas)
 
 
 class IdeaGeneratorAppTests(unittest.TestCase):
     def setUp(self) -> None:
         MockAsyncClient.last_payload = None
         MockAsyncClient.call_count = 0
+        MockAsyncClient.response_ideas = None
 
     def test_generate_idea_persists_record(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -258,6 +262,73 @@ class IdeaGeneratorAppTests(unittest.TestCase):
                 connection.close()
             self.assertEqual(len(rows), 2, "different generation overrides should not share cache")
 
+    def test_same_user_memory_avoids_previous_ideas(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            database_path = os.path.join(temp_dir, "memory_ideas.db")
+            with patch.dict(
+                os.environ,
+                {
+                    "IDEAS_DB_PATH": database_path,
+                    "API_SECRET_KEY": API_HEADERS["X-API-Key"],
+                    "OPENROUTER_API_KEY": "test-key",
+                },
+                clear=False,
+            ):
+                with patch("services.httpx.AsyncClient", MockAsyncClient):
+                    with TestClient(app) as client:
+                        first_response = client.post(
+                            "/",
+                            json={
+                                "user_id": "memory-user",
+                                "prompt_template": "You generate practical and creative project ideas.",
+                                "metadata": {
+                                    "What do you love": ["tech"],
+                                    "What does the world need": ["education"],
+                                    "What are you good at": ["design"],
+                                },
+                            },
+                            headers=API_HEADERS,
+                        )
+                        self.assertEqual(first_response.status_code, 200)
+
+                        MockAsyncClient.response_ideas = [
+                            DEFAULT_IDEAS[0],
+                            DEFAULT_IDEAS[1],
+                            "A community research hub for testing neighborhood service ideas.",
+                            "A founder matching app for mission-driven side projects.",
+                            "A lightweight tool to turn interview notes into opportunity maps.",
+                            "An idea validation sprint kit for small creator-led teams.",
+                            "A collaborative platform for local education mentors and families.",
+                        ]
+
+                        second_response = client.post(
+                            "/",
+                            json={
+                                "user_id": "memory-user",
+                                "prompt_template": "You generate practical and creative project ideas.",
+                                "metadata": {
+                                    "What do you love": ["community"],
+                                    "What does the world need": ["support"],
+                                    "What are you good at": ["research"],
+                                },
+                            },
+                            headers=API_HEADERS,
+                        )
+
+            self.assertEqual(second_response.status_code, 200)
+            second_payload = second_response.json()
+            self.assertEqual(len(second_payload["ideas"]), 5)
+            self.assertNotIn(DEFAULT_IDEAS[0], second_payload["ideas"])
+            self.assertNotIn(DEFAULT_IDEAS[1], second_payload["ideas"])
+            self.assertIn(
+                "Previously generated ideas for this user",
+                MockAsyncClient.last_payload["messages"][1]["content"],
+            )
+            self.assertIn(
+                DEFAULT_IDEAS[0],
+                MockAsyncClient.last_payload["messages"][1]["content"],
+            )
+
     def test_requests_are_rejected_without_valid_api_key(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             database_path = os.path.join(temp_dir, "secure_ideas.db")
@@ -326,6 +397,68 @@ class IdeaGeneratorAppTests(unittest.TestCase):
             finally:
                 connection.close()
             self.assertEqual(len(rows), 1, "should store only one row for same metadata")
+            self.assertEqual(MockAsyncClient.call_count, 1)
+
+    def test_same_user_same_input_bypasses_cache_and_uses_memory(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            database_path = os.path.join(temp_dir, "same_user_memory_ideas.db")
+            with patch.dict(
+                os.environ,
+                {
+                    "IDEAS_DB_PATH": database_path,
+                    "API_SECRET_KEY": API_HEADERS["X-API-Key"],
+                    "OPENROUTER_API_KEY": "test-key",
+                },
+                clear=False,
+            ):
+                with patch("services.httpx.AsyncClient", MockAsyncClient):
+                    with TestClient(app) as client:
+                        payload = {
+                            "user_id": "repeat-user",
+                            "prompt_template": "You generate practical and creative project ideas.",
+                            "metadata": {
+                                "What do you love": ["design"],
+                                "What does the world need": ["education"],
+                                "What are you good at": ["research"],
+                            },
+                        }
+                        first_response = client.post("/", json=payload, headers=API_HEADERS)
+                        self.assertEqual(first_response.status_code, 200)
+
+                        MockAsyncClient.response_ideas = [
+                            DEFAULT_IDEAS[0],
+                            DEFAULT_IDEAS[1],
+                            "A community co-design lab for school innovation pilots.",
+                            "A mentor marketplace for project-based learning programs.",
+                            "A tool that turns student interviews into idea opportunity maps.",
+                            "A founder notebook for education experiments and outcomes.",
+                            "A platform for validating local learning-support services.",
+                        ]
+
+                        second_response = client.post("/", json=payload, headers=API_HEADERS)
+
+            self.assertEqual(second_response.status_code, 200)
+            self.assertEqual(MockAsyncClient.call_count, 2)
+            self.assertNotEqual(
+                first_response.json()["request_id"],
+                second_response.json()["request_id"],
+            )
+            self.assertNotIn(DEFAULT_IDEAS[0], second_response.json()["ideas"])
+            self.assertNotIn(DEFAULT_IDEAS[1], second_response.json()["ideas"])
+            self.assertIn(
+                "Previously generated ideas for this user",
+                MockAsyncClient.last_payload["messages"][1]["content"],
+            )
+
+            connection = sqlite3.connect(database_path)
+            try:
+                rows = connection.execute(
+                    "SELECT id FROM idea_requests WHERE user_id = ? ORDER BY id",
+                    ("repeat-user",),
+                ).fetchall()
+            finally:
+                connection.close()
+            self.assertEqual(len(rows), 2, "same user retries should keep history rows")
 
     def test_requests_with_disallowed_origin_are_rejected(self) -> None:
         with patch.dict(
