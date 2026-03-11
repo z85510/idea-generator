@@ -5,10 +5,12 @@
       "**/.hg": true,
       "**/.DS_Store": true,
       "**/Thumbs.db": true,
+      "**/__pycache__": true,
+      "**/tests/__pycache__": true,
       "**/flutter/ephemeral": true,
       "**/Flutter/ephemeral": true,
       "**/.symlinks": true,
       "**/.plugin_symlinks": true
-   },
+   },    
    "hide-files.files": []
 }
