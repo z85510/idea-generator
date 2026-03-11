@@ -6,6 +6,7 @@
       "**/.DS_Store": true,
       "**/Thumbs.db": true,
       "**/__pycache__": true,
+      "**/.pytest_cache": true,
       "**/tests/__pycache__": true,
       "**/flutter/ephemeral": true,
       "**/Flutter/ephemeral": true,
