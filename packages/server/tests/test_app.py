@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
-from main import app
+from app.main import app
 
 
 API_HEADERS = {"X-API-Key": "frontend-secret"}
@@ -94,7 +94,7 @@ class IdeaGeneratorAppTests(unittest.TestCase):
                 },
                 clear=False,
             ):
-                with patch("services.httpx.AsyncClient", MockAsyncClient):
+                with patch("app.infrastructure.ai.openrouter_client.httpx.AsyncClient", MockAsyncClient):
                     with TestClient(app) as client:
                         response = client.post(
                             "/",
@@ -157,7 +157,7 @@ class IdeaGeneratorAppTests(unittest.TestCase):
                 },
                 clear=False,
             ):
-                with patch("services.httpx.AsyncClient", MockAsyncClient):
+                with patch("app.infrastructure.ai.openrouter_client.httpx.AsyncClient", MockAsyncClient):
                     with TestClient(app) as client:
                         create_response = client.post(
                             "/",
@@ -196,7 +196,7 @@ class IdeaGeneratorAppTests(unittest.TestCase):
                 },
                 clear=False,
             ):
-                with patch("services.httpx.AsyncClient", MockAsyncClient):
+                with patch("app.infrastructure.ai.openrouter_client.httpx.AsyncClient", MockAsyncClient):
                     with TestClient(app) as client:
                         response = client.post(
                             "/",
@@ -232,7 +232,7 @@ class IdeaGeneratorAppTests(unittest.TestCase):
                 },
                 clear=False,
             ):
-                with patch("services.httpx.AsyncClient", MockAsyncClient):
+                with patch("app.infrastructure.ai.openrouter_client.httpx.AsyncClient", MockAsyncClient):
                     with TestClient(app) as client:
                         base_payload = {
                             "user_id": "user-cache",
@@ -271,7 +271,7 @@ class IdeaGeneratorAppTests(unittest.TestCase):
                 },
                 clear=False,
             ):
-                with patch("services.httpx.AsyncClient", MockAsyncClient):
+                with patch("app.infrastructure.ai.openrouter_client.httpx.AsyncClient", MockAsyncClient):
                     with TestClient(app) as client:
                         first_response = client.post(
                             "/",
@@ -364,7 +364,7 @@ class IdeaGeneratorAppTests(unittest.TestCase):
                 },
                 clear=False,
             ):
-                with patch("services.httpx.AsyncClient", MockAsyncClient):
+                with patch("app.infrastructure.ai.openrouter_client.httpx.AsyncClient", MockAsyncClient):
                     with TestClient(app) as client:
                         metadata = {
                             "What do you love": ["design"],
@@ -405,7 +405,7 @@ class IdeaGeneratorAppTests(unittest.TestCase):
                 },
                 clear=False,
             ):
-                with patch("services.httpx.AsyncClient", MockAsyncClient):
+                with patch("app.infrastructure.ai.openrouter_client.httpx.AsyncClient", MockAsyncClient):
                     with TestClient(app) as client:
                         payload = {
                             "user_id": "repeat-user",
@@ -460,7 +460,7 @@ class IdeaGeneratorAppTests(unittest.TestCase):
             clear=False,
         ):
             from importlib import reload
-            import main as main_mod
+            import app.main as main_mod
             reload(main_mod)
             test_app = main_mod.app
         with TestClient(test_app) as client:
