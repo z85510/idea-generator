@@ -87,7 +87,7 @@ curl -X POST http://127.0.0.1:8000/api/ \
   -H "X-API-Key: your-frontend-secret" \
   -d '{
     "user_id": "user-1",
-    "prompt_template": "You generate practical and creative project ideas.",
+    "prompt_template": "Act as a creative product designer. Generate unique, catchy, and short project titles 6-10 words maximum). Do not include descriptions, punctuation, or "Project:" prefixes. Focus on punchy, memorable names.",
     "model": "openai/gpt-4o-mini",
     "temperature": 0.9,
     "number_of_ideas": 5,

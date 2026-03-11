@@ -34,7 +34,7 @@ export function createInitialIdeaGeneratorFormState(): IdeaGeneratorFormState {
       promptTemplate: DEFAULT_PROMPT_TEMPLATE,
       model: SUPPORTED_MODELS[0]?.value ?? '',
       temperature: DEFAULT_TEMPERATURE,
-      numberOfIdeas: '',
+      numberOfIdeas: '3',
       extraInformation: '',
       metadataQuestions: METADATA_QUESTIONS.map((question) => ({
          id: question.id,

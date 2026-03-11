@@ -100,7 +100,7 @@ class IdeaGeneratorAppTests(unittest.TestCase):
                             "/",
                             json={
                                 "user_id": "user-1",
-                                "prompt_template": "You generate practical and creative project ideas.",
+                                "prompt_template": "Act as a creative product designer. Generate unique, catchy, and short project titles 6-10 words maximum). Do not include descriptions, punctuation, or 'Project:' prefixes. Focus on punchy, memorable names.",
                                 "metadata": {
                                     "What do you love": ["tech", "art"],
                                     "What does the world need": ["test"],
@@ -163,8 +163,7 @@ class IdeaGeneratorAppTests(unittest.TestCase):
                             "/",
                             json={
                                 "user_id": "user-2",
-                                "prompt_template": "You generate practical and creative project ideas.",
-                                "metadata": {
+"prompt_template": "Act as a creative product designer. Generate unique, catchy, and short project titles 6-10 words maximum). Do not include descriptions, punctuation, or 'Project:' prefixes. Focus on punchy, memorable names.",                                "metadata": {
                                     "What do you love": ["design"],
                                     "What does the world need": ["education"],
                                     "What are you good at": ["teaching"],
@@ -203,8 +202,7 @@ class IdeaGeneratorAppTests(unittest.TestCase):
                             "/",
                             json={
                                 "user_id": "user-override",
-                                "prompt_template": "You generate practical and creative project ideas.",
-                                "metadata": {
+"prompt_template": "Act as a creative product designer. Generate unique, catchy, and short project titles 6-10 words maximum). Do not include descriptions, punctuation, or 'Project:' prefixes. Focus on punchy, memorable names.",                                "metadata": {
                                     "What do you love": ["tech"],
                                     "What does the world need": ["education"],
                                 },
@@ -238,8 +236,7 @@ class IdeaGeneratorAppTests(unittest.TestCase):
                     with TestClient(app) as client:
                         base_payload = {
                             "user_id": "user-cache",
-                            "prompt_template": "You generate practical and creative project ideas.",
-                            "metadata": {
+"prompt_template": "Act as a creative product designer. Generate unique, catchy, and short project titles 6-10 words maximum). Do not include descriptions, punctuation, or 'Project:' prefixes. Focus on punchy, memorable names.",                            "metadata": {
                                 "What do you love": ["design"],
                                 "What does the world need": ["education"],
                             },
@@ -280,8 +277,7 @@ class IdeaGeneratorAppTests(unittest.TestCase):
                             "/",
                             json={
                                 "user_id": "memory-user",
-                                "prompt_template": "You generate practical and creative project ideas.",
-                                "metadata": {
+"prompt_template": "Act as a creative product designer. Generate unique, catchy, and short project titles 6-10 words maximum). Do not include descriptions, punctuation, or 'Project:' prefixes. Focus on punchy, memorable names.",                                "metadata": {
                                     "What do you love": ["tech"],
                                     "What does the world need": ["education"],
                                     "What are you good at": ["design"],
@@ -305,8 +301,7 @@ class IdeaGeneratorAppTests(unittest.TestCase):
                             "/",
                             json={
                                 "user_id": "memory-user",
-                                "prompt_template": "You generate practical and creative project ideas.",
-                                "metadata": {
+"prompt_template": "Act as a creative product designer. Generate unique, catchy, and short project titles 6-10 words maximum). Do not include descriptions, punctuation, or 'Project:' prefixes. Focus on punchy, memorable names.",                                "metadata": {
                                     "What do you love": ["community"],
                                     "What does the world need": ["support"],
                                     "What are you good at": ["research"],
@@ -346,8 +341,7 @@ class IdeaGeneratorAppTests(unittest.TestCase):
                         "/",
                         json={
                             "user_id": "user-3",
-                            "prompt_template": "You generate practical and creative project ideas.",
-                            "metadata": {"What do you love": ["tech"], "What does the world need": ["test"], "What are you good at": ["test"], "Extra information": ["I am a software engineer", "I am a designer"]},
+"prompt_template": "Act as a creative product designer. Generate unique, catchy, and short project titles 6-10 words maximum). Do not include descriptions, punctuation, or 'Project:' prefixes. Focus on punchy, memorable names.",                            "metadata": {"What do you love": ["tech"], "What does the world need": ["test"], "What are you good at": ["test"], "Extra information": ["I am a software engineer", "I am a designer"]},
                         },
                     )
                     get_response = client.get(
@@ -377,11 +371,11 @@ class IdeaGeneratorAppTests(unittest.TestCase):
                             "What does the world need": ["education"],
                             "What are you good at": ["teaching"],
                         }
-                        payload = {"user_id": "user-a", "prompt_template": "You generate practical and creative project ideas.", "metadata": metadata}
+                        payload = {"user_id": "user-a", "prompt_template": "Act as a creative product designer. Generate unique, catchy, and short project titles 6-10 words maximum). Do not include descriptions, punctuation, or 'Project:' prefixes. Focus on punchy, memorable names.", "metadata": metadata}
                         r1 = client.post("/", json=payload, headers=API_HEADERS)
                         r2 = client.post(
                             "/",
-                            json={"user_id": "user-b", "prompt_template": "You generate practical and creative project ideas.", "metadata": metadata},
+                            json={"user_id": "user-b", "prompt_template": "Act as a creative product designer. Generate unique, catchy, and short project titles 6-10 words maximum). Do not include descriptions, punctuation, or 'Project:' prefixes. Focus on punchy, memorable names.", "metadata": metadata},
                             headers=API_HEADERS,
                         )
 
@@ -415,8 +409,7 @@ class IdeaGeneratorAppTests(unittest.TestCase):
                     with TestClient(app) as client:
                         payload = {
                             "user_id": "repeat-user",
-                            "prompt_template": "You generate practical and creative project ideas.",
-                            "metadata": {
+"prompt_template": "Act as a creative product designer. Generate unique, catchy, and short project titles 6-10 words maximum). Do not include descriptions, punctuation, or \"Project:\" prefixes. Focus on punchy, memorable names.",                            "metadata": {
                                 "What do you love": ["design"],
                                 "What does the world need": ["education"],
                                 "What are you good at": ["research"],

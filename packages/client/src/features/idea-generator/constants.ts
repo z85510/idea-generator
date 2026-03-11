@@ -1,6 +1,6 @@
 export const DEFAULT_USER_ID = 'user-1';
 export const DEFAULT_PROMPT_TEMPLATE =
-   'You generate practical and creative project ideas.';
+   'Act as a creative product designer. Generate unique, catchy, and short project titles 6-10 words maximum). Do not include descriptions, punctuation, or "Project:" prefixes. Focus on punchy, memorable names.';
 export const DEFAULT_TEMPERATURE = 0.9;
 export const EXTRA_INFORMATION_LABEL = 'Extra information';
 

@@ -40,7 +40,7 @@ class IdeaGenerationRequest(BaseModel):
         "json_schema_extra": {
             "example": {
                 "user_id": "user-1",
-                "prompt_template": "You generate practical and creative project ideas.",
+                "prompt_template": "Act as a creative product designer. Generate unique, catchy, and short project titles 6-10 words maximum). Do not include descriptions, punctuation, or 'Project:' prefixes. Focus on punchy, memorable names.",
                 "metadata": {
                     "What do you love": ["tech", "art"],
                     "What does the world need": ["mental health", "education"],
