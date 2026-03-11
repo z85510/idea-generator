@@ -32,7 +32,7 @@ export function createInitialIdeaGeneratorFormState(): IdeaGeneratorFormState {
       apiKey: '',
       userId: DEFAULT_USER_ID,
       promptTemplate: DEFAULT_PROMPT_TEMPLATE,
-      model: SUPPORTED_MODELS[0]?.value ?? '',
+      model: SUPPORTED_MODELS[2]?.value ?? '',
       temperature: DEFAULT_TEMPERATURE,
       numberOfIdeas: '3',
       extraInformation: '',
